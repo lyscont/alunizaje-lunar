@@ -42,6 +42,34 @@ const mensajeResultado = document.getElementById('mensaje-resultado');
 const textoResultado = document.getElementById('texto-resultado');
 const detallesResultado = document.getElementById('detalles-resultado');
 
+// Referencias a los controles táctiles
+const btnArriba = document.getElementById('btn-arriba');
+const btnIzquierda = document.getElementById('btn-izquierda');
+const btnDerecha = document.getElementById('btn-derecha');
+
+// Detectar si es un dispositivo móvil
+const esMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+// Ajustar el tamaño del canvas para dispositivos móviles
+function ajustarTamanoCanvas() {
+    if (esMobile) {
+        // En móviles, ajustar el ancho al 100% del contenedor
+        const contenedor = canvas.parentElement;
+        const anchoDisponible = contenedor.clientWidth;
+        
+        // Mantener la relación de aspecto 4:3
+        const altoCalculado = (anchoDisponible * 3) / 4;
+        
+        // Establecer dimensiones del canvas
+        canvas.style.width = anchoDisponible + 'px';
+        canvas.style.height = altoCalculado + 'px';
+    }
+}
+
+// Llamar a la función de ajuste al cargar y al cambiar el tamaño de la ventana
+window.addEventListener('load', ajustarTamanoCanvas);
+window.addEventListener('resize', ajustarTamanoCanvas);
+
 // Imágenes
 const naveImg = new Image();
 naveImg.src = '/static/images/nave.png';
@@ -798,9 +826,109 @@ document.addEventListener('keyup', (e) => {
     }
 });
 
-// Eventos de botones
+// Eventos de botones de interfaz
 btnIniciar.addEventListener('click', iniciarJuego);
 btnReiniciar.addEventListener('click', reiniciarJuego);
 
+// Eventos para controles táctiles en dispositivos móviles
+
+// Función para manejar eventos táctiles
+function manejarEventosTactiles() {
+    // Botón de propulsión (arriba)
+    btnArriba.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Prevenir comportamiento predeterminado
+        estado.propulsionActiva = true;
+    });
+    
+    btnArriba.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        estado.propulsionActiva = false;
+    });
+    
+    // Botón izquierda
+    btnIzquierda.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        estado.propulsionIzquierda = true;
+    });
+    
+    btnIzquierda.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        estado.propulsionIzquierda = false;
+    });
+    
+    // Botón derecha
+    btnDerecha.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        estado.propulsionDerecha = true;
+    });
+    
+    btnDerecha.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        estado.propulsionDerecha = false;
+    });
+    
+    // Manejar caso donde el usuario mueve el dedo fuera del botón
+    document.addEventListener('touchcancel', () => {
+        estado.propulsionActiva = false;
+        estado.propulsionIzquierda = false;
+        estado.propulsionDerecha = false;
+    });
+}
+
+// También añadir soporte para eventos de mouse (para pruebas en desktop)
+function manejarEventosMouse() {
+    btnArriba.addEventListener('mousedown', () => {
+        estado.propulsionActiva = true;
+    });
+    
+    btnArriba.addEventListener('mouseup', () => {
+        estado.propulsionActiva = false;
+    });
+    
+    btnIzquierda.addEventListener('mousedown', () => {
+        estado.propulsionIzquierda = true;
+    });
+    
+    btnIzquierda.addEventListener('mouseup', () => {
+        estado.propulsionIzquierda = false;
+    });
+    
+    btnDerecha.addEventListener('mousedown', () => {
+        estado.propulsionDerecha = true;
+    });
+    
+    btnDerecha.addEventListener('mouseup', () => {
+        estado.propulsionDerecha = false;
+    });
+    
+    // Manejar caso donde el usuario suelta el botón fuera del elemento
+    document.addEventListener('mouseup', () => {
+        estado.propulsionActiva = false;
+        estado.propulsionIzquierda = false;
+        estado.propulsionDerecha = false;
+    });
+}
+
+// Inicializar controles táctiles
+manejarEventosTactiles();
+manejarEventosMouse();
+
 // Dibujar escena inicial
 dibujarEscena();
+
+// Función para bloquear la orientación a landscape en dispositivos móviles
+function bloquearOrientacion() {
+    if (esMobile && window.screen.orientation && window.screen.orientation.lock) {
+        try {
+            // Intentar bloquear la orientación a landscape
+            window.screen.orientation.lock('landscape').catch(() => {
+                console.log('No se pudo bloquear la orientación');
+            });
+        } catch (error) {
+            console.log('API de orientación no soportada');
+        }
+    }
+}
+
+// Intentar bloquear la orientación cuando el usuario inicia el juego
+btnIniciar.addEventListener('click', bloquearOrientacion);

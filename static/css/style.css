@@ -4,12 +4,15 @@ body {
     color: #e0e0e0;
     margin: 0;
     padding: 0;
+    overscroll-behavior: contain; /* Evita el rebote en iOS */
+    touch-action: manipulation; /* Mejora la respuesta táctil */
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    overflow-x: hidden; /* Evita desplazamiento horizontal */
 }
 
 h1 {
@@ -25,9 +28,53 @@ h1 {
     margin-bottom: 30px;
 }
 
+/* Estilos para dispositivos móviles */
 @media (max-width: 1000px) {
     .game-container {
         flex-direction: column;
+    }
+    
+    .container {
+        padding: 10px;
+    }
+    
+    h1 {
+        font-size: 24px;
+        margin-bottom: 15px;
+    }
+    
+    #gameCanvas {
+        width: 100%;
+        height: auto;
+        max-height: 70vh;
+    }
+    
+    .info-panel {
+        font-size: 14px;
+    }
+    
+    .button-panel button {
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    
+    .instrucciones {
+        font-size: 14px;
+    }
+}
+
+/* Ocultar/mostrar elementos según el dispositivo */
+.mobile-only {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .mobile-only {
+        display: block;
+    }
+    
+    .desktop-only {
+        display: none;
     }
 }
 
@@ -35,6 +82,8 @@ h1 {
     background-color: #000;
     border: 2px solid #6272a4;
     border-radius: 8px;
+    max-width: 100%;
+    object-fit: contain;
 }
 
 .game-controls {
@@ -121,4 +170,53 @@ button:disabled {
 
 .fracaso {
     border: 2px solid #ff5555;
+}
+
+/* Estilos para los controles táctiles */
+.mobile-controls {
+    display: none; /* Oculto por defecto, se mostrará en dispositivos móviles */
+    position: relative;
+    width: 100%;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.control-row {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+    gap: 20px;
+}
+
+.control-btn {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background-color: rgba(80, 250, 123, 0.3);
+    border: 2px solid #50fa7b;
+    color: #fff;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent; /* Elimina el resaltado al tocar en iOS */
+    user-select: none; /* Evita selección de texto */
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.control-btn:active {
+    background-color: rgba(80, 250, 123, 0.7);
+    transform: scale(0.95);
+}
+
+.control-btn i {
+    pointer-events: none; /* Evita problemas con los eventos táctiles */
+}
+
+/* Mostrar controles táctiles solo en dispositivos móviles */
+@media (max-width: 768px) {
+    .mobile-controls {
+        display: block;
+    }
 }

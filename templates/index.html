@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alunizaje Lunar</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
     <div class="container">
@@ -12,6 +13,17 @@
         
         <div class="game-container">
             <canvas id="gameCanvas" width="800" height="600"></canvas>
+            
+            <!-- Controles táctiles para dispositivos móviles -->
+            <div class="mobile-controls">
+                <div class="control-row">
+                    <button id="btn-arriba" class="control-btn"><i class="fas fa-arrow-up"></i></button>
+                </div>
+                <div class="control-row">
+                    <button id="btn-izquierda" class="control-btn"><i class="fas fa-arrow-left"></i></button>
+                    <button id="btn-derecha" class="control-btn"><i class="fas fa-arrow-right"></i></button>
+                </div>
+            </div>
             
             <div class="game-controls">
                 <div class="info-panel">
@@ -40,13 +52,15 @@
                 
                 <div class="instrucciones">
                     <h3>Instrucciones:</h3>
-                    <p>Usa las teclas de flecha para controlar la nave:</p>
+                    <p class="desktop-only">Usa las teclas de flecha para controlar la nave:</p>
+                    <p class="mobile-only">Usa los botones táctiles para controlar la nave:</p>
                     <ul>
                         <li>↑ - Activar propulsores (frenar caída)</li>
                         <li>← - Mover a la izquierda</li>
                         <li>→ - Mover a la derecha</li>
                     </ul>
                     <p>Objetivo: Aterrizar suavemente (velocidad < 4 m/s) en la superficie lunar.</p>
+                    <p class="mobile-only"><strong>Nota:</strong> Gira tu dispositivo a modo horizontal para una mejor experiencia.</p>
                 </div>
             </div>
         </div>
