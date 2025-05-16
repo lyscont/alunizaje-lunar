@@ -174,11 +174,15 @@ button:disabled {
 
 /* Estilos para los controles táctiles */
 .mobile-controls {
-    display: none; /* Oculto por defecto, se mostrará en dispositivos móviles */
+    display: block; /* Mostrar siempre para pruebas */
     position: relative;
     width: 100%;
     margin-top: 15px;
     text-align: center;
+    border: 2px solid #50fa7b;
+    padding: 10px;
+    border-radius: 8px;
+    background-color: rgba(40, 42, 54, 0.7);
 }
 
 .control-row {
@@ -189,20 +193,20 @@ button:disabled {
 }
 
 .control-btn {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    background-color: rgba(80, 250, 123, 0.3);
-    border: 2px solid #50fa7b;
-    color: #fff;
-    font-size: 24px;
+    width: 120px;
+    height: 60px;
+    border-radius: 30px;
+    background-color: rgba(80, 250, 123, 0.5);
+    border: 3px solid #50fa7b;
+    color: #f8f8f2;
+    font-size: 18px;
+    margin: 0 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent; /* Elimina el resaltado al tocar en iOS */
-    user-select: none; /* Evita selección de texto */
-    transition: background-color 0.2s, transform 0.1s;
+    box-shadow: 0 0 10px #50fa7b;
 }
 
 .control-btn:active {
@@ -214,9 +218,7 @@ button:disabled {
     pointer-events: none; /* Evita problemas con los eventos táctiles */
 }
 
-/* Mostrar controles táctiles solo en dispositivos móviles */
-@media (max-width: 768px) {
-    .mobile-controls {
-        display: block;
-    }
+/* Mostrar controles táctiles en todos los dispositivos para pruebas */
+.mobile-controls {
+    display: block;
 }
