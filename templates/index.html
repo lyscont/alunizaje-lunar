@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alunizaje Lunar</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Alunizaje Lunar</h1>
+        
+        <div class="game-container">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+            
+            <div class="game-controls">
+                <div class="info-panel">
+                    <div class="info-item">
+                        <span>Altitud:</span>
+                        <span id="altitud">1000 m</span>
+                    </div>
+                    <div class="info-item">
+                        <span>Velocidad Vertical:</span>
+                        <span id="velocidad-vertical">0.0 m/s</span>
+                    </div>
+                    <div class="info-item">
+                        <span>Velocidad Horizontal:</span>
+                        <span id="velocidad-horizontal">0.0 m/s</span>
+                    </div>
+                    <div class="info-item">
+                        <span>Combustible:</span>
+                        <span id="combustible">1000</span>
+                    </div>
+                </div>
+                
+                <div class="button-panel">
+                    <button id="btn-iniciar">Iniciar Juego</button>
+                    <button id="btn-reiniciar" disabled>Reiniciar</button>
+                </div>
+                
+                <div class="instrucciones">
+                    <h3>Instrucciones:</h3>
+                    <p>Usa las teclas de flecha para controlar la nave:</p>
+                    <ul>
+                        <li>↑ - Activar propulsores (frenar caída)</li>
+                        <li>← - Mover a la izquierda</li>
+                        <li>→ - Mover a la derecha</li>
+                    </ul>
+                    <p>Objetivo: Aterrizar suavemente (velocidad < 4 m/s) en la superficie lunar.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="mensaje-resultado" class="mensaje-resultado oculto">
+            <h2 id="texto-resultado"></h2>
+            <p id="detalles-resultado"></p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/game.js') }}"></script>
+</body>
+</html>
