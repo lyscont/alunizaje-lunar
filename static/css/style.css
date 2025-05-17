@@ -113,15 +113,28 @@ h1 {
     gap: 10px;
 }
 
-button {
+.button-panel button {
+    padding: 10px 20px;
+    margin: 0 5px;
     background-color: #50fa7b;
     color: #282a36;
     border: none;
-    padding: 10px 20px;
-    font-size: 16px;
     border-radius: 5px;
+    font-weight: bold;
     cursor: pointer;
     transition: background-color 0.3s;
+}
+
+.btn-audio {
+    width: 40px;
+    height: 40px;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #bd93f9 !important;
+    box-shadow: 0 0 10px rgba(189, 147, 249, 0.5);
 }
 
 button:hover {

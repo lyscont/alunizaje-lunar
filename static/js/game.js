@@ -50,6 +50,74 @@ const btnDerecha = document.getElementById('btn-derecha');
 // Detectar si es un dispositivo móvil
 const esMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
+// Sistema de sonido
+let audioEnabled = true; // Variable para controlar si el sonido está activado
+const sonidos = {
+    propulsor: new Audio('/static/sounds/thruster.mp3'),
+    explosion: new Audio('/static/sounds/explosion.mp3'),
+    aterrizaje: new Audio('/static/sounds/landing.mp3'),
+    fondo: new Audio('/static/sounds/background.mp3')
+};
+
+// Configurar sonidos
+sonidos.propulsor.loop = true; // El sonido del propulsor se reproduce en bucle mientras está activo
+sonidos.fondo.loop = true; // La música de fondo se reproduce en bucle
+sonidos.fondo.volume = 0.3; // Volumen más bajo para la música de fondo
+
+// Función para reproducir un sonido
+function reproducirSonido(nombre) {
+    if (!audioEnabled) return; // No reproducir si el audio está desactivado
+    
+    try {
+        const sonido = sonidos[nombre];
+        if (sonido.paused) {
+            sonido.currentTime = 0; // Reiniciar el sonido si ya ha terminado
+            sonido.play().catch(error => console.log('Error al reproducir sonido:', error));
+        }
+    } catch (error) {
+        console.log('Error al acceder al sonido:', error);
+    }
+}
+
+// Función para detener un sonido
+function detenerSonido(nombre) {
+    try {
+        const sonido = sonidos[nombre];
+        sonido.pause();
+        sonido.currentTime = 0;
+    } catch (error) {
+        console.log('Error al detener sonido:', error);
+    }
+}
+
+// Función para alternar el estado del audio
+function toggleAudio() {
+    audioEnabled = !audioEnabled;
+    
+    if (!audioEnabled) {
+        // Detener todos los sonidos si se desactiva el audio
+        Object.keys(sonidos).forEach(nombre => {
+            sonidos[nombre].pause();
+        });
+    } else if (estado.enJuego) {
+        // Reanudar música de fondo si el juego está en curso
+        reproducirSonido('fondo');
+    }
+    
+    // Actualizar el texto del botón de audio
+    actualizarBotonAudio();
+}
+
+// Función para actualizar el estado visual del botón de audio
+function actualizarBotonAudio() {
+    const btnAudio = document.getElementById('btn-audio');
+    if (btnAudio) {
+        btnAudio.innerHTML = audioEnabled ? 
+            '<i class="fas fa-volume-up"></i>' : 
+            '<i class="fas fa-volume-mute"></i>';
+    }
+}
+
 // Ajustar el tamaño del canvas para dispositivos móviles
 function ajustarTamanoCanvas() {
     if (esMobile) {
@@ -88,31 +156,38 @@ fetch('/api/config')
 
 // Inicializar el juego
 function iniciarJuego() {
+    if (estado.enJuego) return;
+    
+    // Inicializar estado del juego
     estado.enJuego = true;
     estado.altitud = 1000;
     estado.velocidadVertical = 0;
     estado.velocidadHorizontal = 0;
     estado.combustible = config.combustible_inicial;
     estado.posicionX = canvas.width / 2;
+    estado.propulsionActiva = false;
+    estado.propulsionIzquierda = false;
+    estado.propulsionDerecha = false;
     estado.naveDestruida = false;
+    estado.animacionExplosion.activa = false;
     
-    // Generar terreno lunar aleatorio
+    // Generar terreno aleatorio
     generarTerreno();
     
-    // Inicializar estrellas fijas
+    // Inicializar estrellas
     inicializarEstrellas();
     
     // Actualizar interfaz
-    actualizarInterfaz();
-    
-    // Cambiar estado de botones
     btnIniciar.disabled = true;
     btnReiniciar.disabled = false;
-    
-    // Ocultar mensaje de resultado
     mensajeResultado.classList.add('oculto');
     
-    // Iniciar bucle del juego
+    // Iniciar sonidos
+    if (audioEnabled) {
+        reproducirSonido('fondo');
+    }
+    
+    // Iniciar bucle de juego
     requestAnimationFrame(actualizarJuego);
 }
 
@@ -174,28 +249,61 @@ function actualizarFisica() {
     
     // Aplicar propulsión si está activa y hay combustible
     if (estado.propulsionActiva && estado.combustible > 0) {
-        estado.velocidadVertical -= config.potencia_motor * 0.02;
+        estado.velocidadVertical -= config.potencia_motor * 0.04;
         estado.combustible -= 1;
+        
+        // Reproducir sonido de propulsores
+        if (audioEnabled && sonidos.propulsor.paused) {
+            reproducirSonido('propulsor');
+        }
+    } else {
+        // Detener sonido de propulsores
+        if (!sonidos.propulsor.paused) {
+            detenerSonido('propulsor');
+        }
     }
     
     // Aplicar propulsión lateral
     if (estado.propulsionIzquierda && estado.combustible > 0) {
-        estado.velocidadHorizontal -= 1 * 0.02;
+        estado.velocidadHorizontal -= 0.1;
         estado.combustible -= 0.5;
+        
+        // Reproducir sonido de propulsores laterales si no está ya sonando el principal
+        if (audioEnabled && sonidos.propulsor.paused) {
+            reproducirSonido('propulsor');
+        }
     }
     
     if (estado.propulsionDerecha && estado.combustible > 0) {
-        estado.velocidadHorizontal += 1 * 0.02;
+        estado.velocidadHorizontal += 0.1;
         estado.combustible -= 0.5;
+        
+        // Reproducir sonido de propulsores laterales si no está ya sonando el principal
+        if (audioEnabled && sonidos.propulsor.paused) {
+            reproducirSonido('propulsor');
+        }
     }
     
-    // Actualizar posición
-    estado.posicionX += estado.velocidadHorizontal;
-    estado.altitud -= estado.velocidadVertical;
+    // Detener sonido de propulsores si no hay propulsión activa
+    if (!estado.propulsionActiva && !estado.propulsionIzquierda && !estado.propulsionDerecha && !sonidos.propulsor.paused) {
+        detenerSonido('propulsor');
+    }
     
-    // Limitar posición X dentro del canvas
-    if (estado.posicionX < 0) estado.posicionX = 0;
-    if (estado.posicionX > canvas.width) estado.posicionX = canvas.width;
+    // Limitar la velocidad horizontal
+    estado.velocidadHorizontal = Math.max(-5, Math.min(5, estado.velocidadHorizontal));
+    
+    // Actualizar posición
+    estado.altitud -= estado.velocidadVertical;
+    estado.posicionX += estado.velocidadHorizontal;
+    
+    // Mantener la nave dentro de los límites del canvas
+    if (estado.posicionX < 0) {
+        estado.posicionX = 0;
+        estado.velocidadHorizontal = 0;
+    } else if (estado.posicionX > canvas.width) {
+        estado.posicionX = canvas.width;
+        estado.velocidadHorizontal = 0;
+    }
 }
 
 // Dibujar la escena del juego
@@ -204,10 +312,8 @@ function dibujarEscena() {
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Dibujar estrellas
+    // Dibujar estrellas y terreno
     dibujarEstrellas();
-    
-    // Dibujar terreno lunar
     dibujarTerreno();
     
     // Dibujar nave si no está destruida
@@ -645,59 +751,53 @@ function comprobarColision() {
 function animarExplosion() {
     if (!estado.animacionExplosion.activa) return;
     
-    // Limpiar canvas
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Dibujar estrellas y terreno
-    dibujarEstrellas();
-    dibujarTerreno();
-    
-    // Dibujar explosión
-    const { posicionX, posicionY, frame } = estado.animacionExplosion;
-    const radio = frame * 2;
-    
-    // Círculo exterior (naranja)
-    ctx.fillStyle = '#FF5500';
-    ctx.beginPath();
-    ctx.arc(posicionX, posicionY, radio, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Círculo medio (amarillo)
-    ctx.fillStyle = '#FFDD00';
-    ctx.beginPath();
-    ctx.arc(posicionX, posicionY, radio * 0.7, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Círculo interior (blanco)
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.arc(posicionX, posicionY, radio * 0.4, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Partículas de la explosión
-    ctx.fillStyle = '#FF7700';
-    for (let i = 0; i < 20; i++) {
-        const angulo = Math.random() * Math.PI * 2;
-        const distancia = Math.random() * radio * 1.2;
-        const tamano = Math.random() * 5 + 2;
-        const x = posicionX + Math.cos(angulo) * distancia;
-        const y = posicionY + Math.sin(angulo) * distancia;
-        
-        ctx.beginPath();
-        ctx.arc(x, y, tamano, 0, Math.PI * 2);
-        ctx.fill();
+    // Reproducir sonido de explosión al inicio de la animación
+    if (estado.animacionExplosion.frame === 0 && audioEnabled) {
+        reproducirSonido('explosion');
     }
     
-    // Actualizar frame
+    // Incrementar el frame de la animación
     estado.animacionExplosion.frame++;
     
-    // Continuar animación o finalizar
-    if (estado.animacionExplosion.frame < estado.animacionExplosion.maxFrames) {
-        requestAnimationFrame(animarExplosion);
-    } else {
+    // Dibujar la explosión
+    const { posicionX, posicionY, frame, maxFrames } = estado.animacionExplosion;
+    const radio = frame * 2;
+    const opacidad = 1 - (frame / maxFrames);
+    
+    // Círculo exterior
+    ctx.beginPath();
+    ctx.arc(posicionX, posicionY, radio, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 165, 0, ${opacidad * 0.7})`;
+    ctx.fill();
+    
+    // Círculo interior
+    ctx.beginPath();
+    ctx.arc(posicionX, posicionY, radio * 0.7, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 69, 0, ${opacidad})`;
+    ctx.fill();
+    
+    // Destellos
+    for (let i = 0; i < 8; i++) {
+        const angulo = (i / 8) * Math.PI * 2;
+        const x = posicionX + Math.cos(angulo) * radio * 0.8;
+        const y = posicionY + Math.sin(angulo) * radio * 0.8;
+        const longitud = radio * 0.4 * Math.random();
+        
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(
+            x + Math.cos(angulo) * longitud,
+            y + Math.sin(angulo) * longitud
+        );
+        ctx.strokeStyle = `rgba(255, 255, 0, ${opacidad})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+    
+    // Finalizar la animación cuando se alcanza el máximo de frames
+    if (frame >= maxFrames) {
         estado.animacionExplosion.activa = false;
-        mostrarMensajeResultado(false);
+        finalizarJuego();
     }
 }
 
@@ -725,39 +825,38 @@ function mostrarMensajeResultado(exitoso) {
 // Finalizar el juego
 function finalizarJuego() {
     estado.enJuego = false;
+    btnReiniciar.disabled = false;
+    
+    // Detener todos los sonidos excepto el de explosión o aterrizaje
+    detenerSonido('propulsor');
+    detenerSonido('fondo');
     
     // Comprobar si el aterrizaje fue exitoso
-    const exitoso = comprobarAterrizajeExitoso();
+    const exitoso = !estado.naveDestruida && comprobarAterrizajeExitoso();
     
-    if (!exitoso) {
-        // Iniciar animación de explosión
-        estado.naveDestruida = true;
-        estado.animacionExplosion.activa = true;
-        estado.animacionExplosion.frame = 0;
-        estado.animacionExplosion.posicionX = estado.posicionX;
-        estado.animacionExplosion.posicionY = canvas.height - estado.altitud;
-        
-        // Animar la explosión antes de mostrar el mensaje
-        animarExplosion();
-        return;
-    }
-    
-    // Mostrar mensaje de resultado inmediatamente para aterrizaje exitoso
+    // Mostrar mensaje de resultado
     mostrarMensajeResultado(exitoso);
+    
+    // Enviar puntaje al servidor
+    enviarPuntaje(exitoso);
 }
 
 // Comprobar si el aterrizaje fue exitoso
 function comprobarAterrizajeExitoso() {
-    // Comprobar velocidad vertical
-    const velocidadSegura = estado.velocidadVertical < config.velocidad_segura_aterrizaje;
+    // Verificar si la nave está sobre la zona de aterrizaje
+    const { inicio, fin } = estado.zonaAterrizaje;
+    const sobreZonaAterrizaje = estado.posicionX >= inicio && estado.posicionX <= fin;
     
-    // Comprobar si aterrizó en la zona de aterrizaje
-    const enZonaAterrizaje = (
-        estado.posicionX >= estado.zonaAterrizaje.inicio && 
-        estado.posicionX <= estado.zonaAterrizaje.fin
-    );
+    // Verificar si la velocidad es segura para aterrizar
+    const velocidadSegura = Math.abs(estado.velocidadVertical) < config.velocidad_segura_aterrizaje &&
+                            Math.abs(estado.velocidadHorizontal) < 2;
     
-    return velocidadSegura && enZonaAterrizaje;
+    // Reproducir sonido de aterrizaje exitoso
+    if (sobreZonaAterrizaje && velocidadSegura && audioEnabled) {
+        reproducirSonido('aterrizaje');
+    }
+    
+    return sobreZonaAterrizaje && velocidadSegura;
 }
 
 // Enviar puntaje al servidor
@@ -792,6 +891,11 @@ function actualizarInterfaz() {
 
 // Reiniciar el juego
 function reiniciarJuego() {
+    // Detener todos los sonidos antes de reiniciar
+    Object.keys(sonidos).forEach(nombre => {
+        detenerSonido(nombre);
+    });
+    
     iniciarJuego();
 }
 
@@ -829,6 +933,12 @@ document.addEventListener('keyup', (e) => {
 // Eventos de botones de interfaz
 btnIniciar.addEventListener('click', iniciarJuego);
 btnReiniciar.addEventListener('click', reiniciarJuego);
+
+// Evento para el botón de audio
+const btnAudio = document.getElementById('btn-audio');
+if (btnAudio) {
+    btnAudio.addEventListener('click', toggleAudio);
+}
 
 // Eventos para controles táctiles en dispositivos móviles
 
